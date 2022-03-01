@@ -1,236 +1,165 @@
 <template>
-    <div class="w-full">
-        <div v-for="(address, index) in field.value">
-            <form-section style="margin-bottom: 0">{{ __('Адрес') }} {{ index + 1 }}</form-section>
-
-            <div class="w-full">
-                <div class="flex flex-wrap">
-                    <field-wrapper size="w-1/5">
-                        <form-label>{{ __('Регион') }}</form-label>
-                        <div class="form__group__input-group">
-                            <app-select :options="regions()"
-                                        v-model="address.region"
-                                        search
-                                        simpleSearch
-                                        withEmpty
-                                        v-bind="extraAttributes"
-                                        :class="errorClasses()"/>
+    <default-field :field="field" :errors="errors" :inline="inline" v-bind="other">
+        <template v-slot:field>
+            <div>
+                <div class="flex">
+<!--                    <draggable class="flex"-->
+<!--                               :value="field.value"-->
+<!--                               @input="change"-->
+<!--                               tag="div"-->
+<!--                               v-bind="dragOptions"-->
+<!--                               @end="dragEnd">-->
+                        <div class="bg-grey-lightest rounded flex mr-2 mb-2 items-center"
+                             v-for="(tag, $i) in tags" :key="$i" :title="__('Убрать тег')">
+<!--                            <div class="cursor-move py-1 px-2 select-none">-->
+<!--                                <i class="icon icon&#45;&#45;handle mt-1"></i>-->
+<!--                            </div>-->
+                            <div class="py-1 px-2 pr-0">
+                                {{ tag }}
+                            </div>
+                            <div class="hover:text-danger cursor-pointer py-1 px-2" @click="removeTag(tag)">
+                                <i class="far fa-times text-sm"></i>
+                            </div>
                         </div>
-                    </field-wrapper>
-                    <field-wrapper size="w-1/6">
-                        <form-label>{{ __('Город') }}</form-label>
-                        <div class="form__group__input-group">
-                            <app-select :options="cities(index)"
-                                        v-model="address.city"
-                                        search
-                                        simpleSearch
-                                        withEmpty
-                                        v-bind="extraAttributes"
-                                        :class="errorClasses()"/>
-                        </div>
-                    </field-wrapper>
-                    <field-wrapper size="w-1/6">
-                        <form-label>{{ __('Район') }}</form-label>
-                        <div class="form__group__input-group">
-                            <app-select :options="districts"
-                                        v-model="address.district"
-                                        search
-                                        simpleSearch
-                                        withEmpty
-                                        v-bind="extraAttributes"
-                                        :class="errorClasses()"/>
-                        </div>
-                    </field-wrapper>
+<!--                    </draggable>-->
                 </div>
-                <div class="flex flex-wrap">
-                    <field-wrapper size="w-1/5">
-                        <form-label>{{ __('Улица') }}</form-label>
-                        <div class="form__group__input-group">
-                            <search-input :options="streets(index)"
-                                          v-model="address.street"
-                                          autoFilter
-                                          @select="setDistrict($event, index)"
-                                          v-bind="extraAttributes"
-                                          :class="errorClasses()"/>
-                        </div>
-                    </field-wrapper>
-                    <field-wrapper size="w-1/6">
-                        <form-label>{{ __('Номер') }}</form-label>
-                        <div class="form__group__input-group">
-                            <text-input v-model="address.number"
-                                        v-bind="extraAttributes"/>
-                        </div>
-                    </field-wrapper>
-                    <field-wrapper size="w-1/6">
-                        <form-label>{{ __('Квартира') }}</form-label>
-                        <div class="form__group__input-group">
-                            <text-input v-model="address.flat"
-                                        v-bind="extraAttributes"/>
-                        </div>
-                    </field-wrapper>
-                    <field-wrapper style="width: 10%">
-                        <form-label>{{ __('Подъезд') }}</form-label>
-                        <div class="form__group__input-group">
-                            <text-input v-model="address.porch"
-                                        v-bind="extraAttributes"/>
-                        </div>
-                    </field-wrapper>
-                    <field-wrapper style="width: 10%">
-                        <form-label>{{ __('Этаж') }}</form-label>
-                        <div class="form__group__input-group">
-                            <text-input v-model="address.floor"
-                                        v-bind="extraAttributes"/>
-                        </div>
-                    </field-wrapper>
-                    <field-wrapper style="width: 15%">
-                        <form-label>{{ __('Время') }}</form-label>
-                        <div class="form__group__input-group">
-                            <text-input v-model="address.time"
-                                        v-bind="extraAttributes"/>
-                        </div>
-                    </field-wrapper>
 
-                    <div class="flex flex-col ml-auto items-center justify-center">
-                        <div v-if="field.value.length > 1" @click="remove(index)"
-                             class="text-grey-dark hover:text-danger button--icon py-2 cursor-pointer">
-                            <i class="far fa-trash-alt"></i>
-                        </div>
-                        <div @click="setDefaultAddress(index)" :title="__('Сделать главным адресом')"
-                             class="text-grey-dark hover:text-blue button--icon py-2 cursor-pointer">
-                            <i class="far fa-star" v-if="field.default_address != index"></i>
-                            <i class="fas fa-star text-blue" v-if="field.default_address == index"></i>
-                        </div>
-                    </div>
-                </div>
+                <search-input
+                    @search="search"
+                    @enter.prevent.stop="addTag($event.target.value)"
+                    @select="addTag"
+                    :options="options"
+                    :id="field.attribute"
+                    v-model="newTag"
+                    v-bind="extraAttributes"
+                    :placeholder="__('Добавить тег')"
+                    :class="errorClasses()">
+                </search-input>
             </div>
-        </div>
-
-        <button type="button" @click="addAddress" class="w-full cursor-pointer text-center hover:bg-grey-lighter"
-                style="margin-top: -5px">
-            <i class="fal fa-plus" style="font-size: 0.7rem"></i>
-        </button>
-    </div>
+        </template>
+    </default-field>
 </template>
 
 <script>
-    import HandlesValidationErrors from "../mixins/HandlesValidationErrors"
-    import FormField from "../mixins/FormField"
+import HandlesValidationErrors from "../mixins/HandlesValidationErrors"
+import FormField from "../mixins/FormField"
+// import Draggable from "vuedraggable"
 
-    const root = 'fields/address'
+const root = 'fields/tags'
 
-    export default {
-        mixins: [FormField, HandlesValidationErrors],
+export default {
+    components: {
+        // Draggable,
+    },
 
-        data: () => ({
-            locations: [],
-            districts: [],
-            castArray: true,
-        }),
+    mixins: [FormField, HandlesValidationErrors],
 
-        computed: {
-            defaultAttributes() {
-                return {
-                    type: this.field.type || 'text',
-                    min: this.field.min,
-                    max: this.field.max,
-                    step: this.field.step,
-                    pattern: this.field.pattern,
-                    placeholder: this.field.placeholder,
-                }
-            },
+    data: () => ({
+        castArray: true,
+        newTag: '',
+        options: [],
 
-            extraAttributes() {
-                const attrs = this.field.extraAttributes
+        // dragOptions: {
+        //     delay: 0,
+        //     touchStartThreshold: 0,
+        //     forceFallback: true,
+        //     animation: 150,
+        //     ghostClass: "ghost",
+        //     handle: ".cursor-move",
+        //     dragClass: "sortable-drag",
+        // },
+    }),
 
-                return {
-                    ...this.defaultAttributes,
-                    ...attrs,
-                }
-            },
+    computed: {
+        defaultAttributes() {
+            return {
+                type: this.field.type || 'text',
+                min: this.field.min,
+                max: this.field.max,
+                step: this.field.step,
+                pattern: this.field.pattern,
+                placeholder: this.field.placeholder,
+            }
         },
 
-        mounted() {
-            this.fetchLocations()
+        extraAttributes() {
+            const attrs = this.field.extraAttributes
+
+            return {
+                ...this.defaultAttributes,
+                ...attrs,
+            }
         },
 
-        methods: {
-            fetchLocations() {
-                App.api.request({
-                    url: root + '/locations',
-                }).then(({data, districts}) => {
-                    this.locations = data
-                    this.districts = districts
-                })
-            },
+        tags() {
+            return this.value
+        },
+    },
 
-            regions() {
-                return this.locations
-            },
+    mounted() {
+        console.log(this.value)
+    },
 
-            cities(index) {
-                if (!this.field.value[index].region)
-                    return []
+    methods: {
+        search(query, force = false) {
+            if (this.loading && !force)
+                return
 
-                let locations = this.locations.find(location => location.value == this.field.value[index].region)
+            this.loading = true
 
-                if (!locations)
-                    return []
+            App.api.request({
+                url: root + '/search',
+                params: {
+                    query: query,
+                },
+            }).then(({data}) => {
+                this.loading = false
+                this.options = data
+            })
+        },
 
-                return locations.children
-            },
+        addTag(value) {
+            if (!value)
+                return
 
-            streets(index) {
-                if (!this.field.value[index].city || !this.cities(index).length)
-                    return []
+            if (this.loading)
+                return
 
-                let city = this.cities(index).find(location => location.value == this.field.value[index].city)
+            this.loading = true
 
-                return city ? city.children : []
-            },
+            App.api.request({
+                method: 'POST',
+                url: root,
+                params: {
+                    value,
+                },
+            }).then(({message}) => {
+                this.loading = false
 
-            addAddress() {
-                this.field.value.push({
-                    region: null,
-                    city: null,
-                    district: null,
-                    street: null,
-                    number: null,
-                    flat: null,
-                    porch: null,
-                    floor: null,
-                    time: null,
-                })
-            },
+                let values = this.tags
 
-            remove(index) {
-                if (! confirm(this.__('Удалить адрес?')))
-                    return
-
-                this.field.value = this.field.value.filter((item, i) => i != index)
-            },
-
-            setDistrict(value, index) {
-                let street = this.streets(index).find(street => street.value == value)
-
-                if (street) {
-                    this.field.value[index].district = street.parent_id
+                if (!values.find(item => item == this.newTag)) {
+                    values.push(this.newTag)
                 }
-            },
 
-            setDefaultAddress(index) {
-                App.api.request({
-                    url: root + '/default-address/' + this.field.order + '/' + index,
-                    method: 'POST',
-                }).then(() => {
-                    this.field.default_address = index
+                this.handleChange(values)
 
-                    this.$toasted.show(
-                        this.__('Адрес установлен'),
-                        {type: 'success'}
-                    )
-                })
-            },
+                this.newTag = ''
+                // if (message)
+                //     this.$toasted.success(message)
+            })
         },
-    }
+
+        removeTag(value) {
+            let values = this.tags
+
+            this.handleChange(values.filter(item => item != value))
+        },
+
+        // change(value) {
+        //     this.handleChange(value)
+        // },
+    },
+}
 </script>
 

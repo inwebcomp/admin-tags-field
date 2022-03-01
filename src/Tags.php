@@ -2,7 +2,6 @@
 
 namespace Admin\Fields\Tags;
 
-use App\Models\Location;
 use InWeb\Admin\App\Fields\Text;
 
 class Tags extends Text
@@ -20,17 +19,10 @@ class Tags extends Text
     {
         parent::__construct($name, $attribute, $resolveCallback);
 
-        $this->original(true);
-
-        $this->displayUsing(function ($value) {
-            if (! is_array($value))
-                return $value;
-
-            return implode(', ', $value[0]);
-        });
-
         $this->resolveUsing(function ($value) {
-            return $value;
+            return $value->map(function($item) {
+                return $item->name;
+            });
         });
     }
 }

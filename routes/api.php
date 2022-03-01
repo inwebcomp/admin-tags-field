@@ -1,5 +1,6 @@
 <?php
 
 Route::group(['prefix' => 'fields/tags'], function () {
-    Route::get('', 'FieldController@index');
+    Route::post('', 'FieldController@store');
+    Route::get('search', 'FieldController@search');
 });
