@@ -55,7 +55,7 @@ export default {
     mixins: [FormField, HandlesValidationErrors],
 
     data: () => ({
-        castArray: false,
+        castArray: true,
         newTag: '',
         options: [],
 
